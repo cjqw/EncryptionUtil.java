@@ -7,17 +7,17 @@ public class EncryptionUtil{
     /**
      * String to hold name of the encryption algorithm.
      */
-    public static final String ALGORITHM = "RSA";
+    public static final String ENCRYPT_ALGORITHM = "RSA";
 
     /**
-     * String to hold the name of the private key file.
+     * String to hold name of the signature algorithm.
      */
-    public static final String PRIVATE_KEY_FILE = "./private.key";
+    public static final String SIGNATURE_ALGORITHM = "MD5withRSA";
 
     /**
-     * String to hold name of the public key file.
+     * Integer to hold the length of RSA key
      */
-    public static final String PUBLIC_KEY_FILE = "./public.key";
+    public static final Integer RSA_KEY_LENGTH = 2048;
 
     /**
      * Generate key which contains a pair of private and public key using 1024
@@ -27,55 +27,16 @@ public class EncryptionUtil{
      * @throws IOException
      * @throws FileNotFoundException
      */
-    public static void generateKey(){
+    public static KeyPair generate(){
+        KeyPair keys = null;
         try {
-            final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
-            keyGen.initialize(1024);
-            final KeyPair key = keyGen.generateKeyPair();
-
-            File privateKeyFile = new File(PRIVATE_KEY_FILE);
-            File publicKeyFile = new File(PUBLIC_KEY_FILE);
-
-            // Create files to store public and private key
-            if (privateKeyFile.getParentFile() != null) {
-                privateKeyFile.getParentFile().mkdirs();
-            }
-            privateKeyFile.createNewFile();
-
-            if (publicKeyFile.getParentFile() != null) {
-                publicKeyFile.getParentFile().mkdirs();
-            }
-            publicKeyFile.createNewFile();
-
-            // Saving the Public key in a file
-            ObjectOutputStream publicKeyOS =
-                new ObjectOutputStream(new FileOutputStream(publicKeyFile));
-            publicKeyOS.writeObject(key.getPublic());
-            publicKeyOS.close();
-
-            // Saving the Private key in a file
-            ObjectOutputStream privateKeyOS =
-                new ObjectOutputStream(new FileOutputStream(privateKeyFile));
-            privateKeyOS.writeObject(key.getPrivate());
-            privateKeyOS.close();
+            final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ENCRYPT_ALGORITHM);
+            keyGen.initialize(RSA_KEY_LENGTH);
+            keys = keyGen.generateKeyPair();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    /**
-     * The method checks if the pair of public and private key has been generated.
-     *
-     * @return flag indicating if the pair of keys were generated.
-     */
-    public static boolean areKeysPresent() {
-
-        File privateKey = new File(PRIVATE_KEY_FILE);
-        File publicKey = new File(PUBLIC_KEY_FILE);
-
-        if (privateKey.exists() && publicKey.exists()) {
-            return true;
-        }
-        return false;
+        return keys;
     }
 
     /**
@@ -92,7 +53,7 @@ public class EncryptionUtil{
         byte[] cipherText = null;
         try {
             // get an RSA cipher object and print the provider
-            final Cipher cipher = Cipher.getInstance(ALGORITHM);
+            final Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORITHM);
             // encrypt the plain text using the public key
             cipher.init(Cipher.ENCRYPT_MODE, key);
             cipherText = cipher.doFinal(text.getBytes());
@@ -116,17 +77,64 @@ public class EncryptionUtil{
         byte[] dectyptedText = null;
         try {
             // get an RSA cipher object and print the provider
-            final Cipher cipher = Cipher.getInstance(ALGORITHM);
+            final Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORITHM);
 
             // decrypt the text using the private key
             cipher.init(Cipher.DECRYPT_MODE, key);
             dectyptedText = cipher.doFinal(text);
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return new String(dectyptedText);
+    }
+
+    /**
+     * Sign the text using privete key.
+     *
+     * @param text
+     *          :origin text
+     * @param key
+     *          :the private key
+     * @return signed text
+     * @throws java.lang.Exception
+     */
+    public static byte[] sign(byte[] text, PrivateKey key){
+        byte[] sign = null;
+        try{
+            Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+            signature.initSign(key);
+            signature.update(text);
+            sign = signature.sign();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+        return sign;
+    }
+
+    /**
+     * Verify if the signed text belongs to the owner of the private key.
+     * @param text
+     *          :origin text
+     * @param key
+     *          :public key
+     * @param sign
+     *          :signed text
+     * @return boolean,if verification succeed,return true，otherwise return false
+     * @throws java.lang.Exception
+     **/
+    public static boolean verify(byte[] text,PublicKey key,byte[] sign) {
+        Boolean result = false;
+        try{
+            Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+            signature.initVerify(key);
+            signature.update(text);
+            result = signature.verify(sign);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return result;
     }
 
     /**
@@ -135,30 +143,23 @@ public class EncryptionUtil{
     public static void main(String[] args) {
 
         try {
+            Scanner sc = new Scanner(System.in);
 
-            // Check if the pair of keys are present else generate those.
-            if (!areKeysPresent()) {
-                // Method generates a pair of keys using the RSA algorithm and stores it
-                // in their respective files
-                generateKey();
-            }
+            KeyPair keys = generate();
+            final PublicKey publicKey = keys.getPublic();
+            final PrivateKey privateKey = keys.getPrivate();
 
-            final String originalText = "Text to be encrypted ";
-            ObjectInputStream inputStream = null;
+            final String originalText = sc.next();
 
             // Encrypt the string using the public key
-            inputStream = new ObjectInputStream(new FileInputStream(PUBLIC_KEY_FILE));
-            final PublicKey publicKey = (PublicKey) inputStream.readObject();
             final byte[] cipherText = encrypt(originalText, publicKey);
 
             // Decrypt the cipher text using the private key.
-            inputStream = new ObjectInputStream(new FileInputStream(PRIVATE_KEY_FILE));
-            final PrivateKey privateKey = (PrivateKey) inputStream.readObject();
             final String plainText = decrypt(cipherText, privateKey);
 
             // Printing the Original, Encrypted and Decrypted Text
             System.out.println("Original: " + originalText);
-            System.out.println("Encrypted: " +cipherText.toString());
+            System.out.println("Encrypted: " + cipherText);
             System.out.println("Decrypted: " + plainText);
 
         } catch (Exception e) {
