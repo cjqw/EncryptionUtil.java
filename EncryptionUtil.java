@@ -100,12 +100,12 @@ public class EncryptionUtil{
      * @return signed text
      * @throws java.lang.Exception
      */
-    public static byte[] sign(String text, PrivateKey key){
+    public static byte[] sign(byte[] text, PrivateKey key){
         byte[] sign = null;
         try{
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             signature.initSign(key);
-            signature.update(text.getBytes());
+            signature.update(text);
             sign = signature.sign();
         } catch(Exception e){
             e.printStackTrace();
@@ -124,13 +124,30 @@ public class EncryptionUtil{
      * @return boolean,if verification succeed,return true，otherwise return false
      * @throws java.lang.Exception
      **/
-    public static boolean verify(String text,PublicKey key,byte[] sign) {
+    public static boolean verify(byte [] text,PublicKey key,byte[] sign) {
         Boolean result = false;
         try{
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             signature.initVerify(key);
-            signature.update(text.getBytes());
+            signature.update(text);
             result = signature.verify(sign);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * Return the summary of a long String.
+     * @param text
+     *          :origin text
+     * @return String
+     * @throws java.lang.Exception
+     **/
+    public static String summary(String text){
+        String result = "";
+        try{
+            result = text;
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -151,14 +168,15 @@ public class EncryptionUtil{
 
             final String originalText = sc.next();
 
-            // Encrypt the string using the public key
+            // Encrypt the string using the public key.
             final byte[] cipherText = encrypt(originalText, publicKey);
-            final byte[] signText = sign(originalText, privateKey);
 
             // Decrypt the cipher text using the private key.
             final String plainText = decrypt(cipherText, privateKey);
 
-            final Boolean verifyResult = verify(originalText, publicKey,signText);
+            // Test signature algorithm.
+            final byte[] signText = sign(originalText.getBytes(), privateKey);
+            final Boolean verifyResult = verify(originalText.getBytes(), publicKey,signText);
 
             // Printing the Original, Encrypted and Decrypted Text
             System.out.println("Original: " + originalText);
