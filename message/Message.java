@@ -8,27 +8,26 @@ import message.encryptionutil.*;
 public class Message{
     private int number_of_signature = 0;
     private String message;
-    private List <String> signature;
-    private String summary;
+    private List <String> signature = new ArrayList <String> ();
+    private String summary = "";
 
-    public Message(){
-        signature = new ArrayList<String>();
-    }
+    public Message(){}
 
     public Message(String msg) throws Exception{
-        signature = new ArrayList<String>();
         Scanner sc = new Scanner(msg);
+
         // Parse the summary
+        int summary_length = sc.nextInt();
         sc.useDelimiter("");
-        byte summary_length = (byte)(sc.next().charAt(0));
-        summary = "";
+        sc.next();
         for(int i = 0; i < summary_length; i++){
             summary = summary + sc.next().charAt(0);
         }
-        sc.useDelimiter(" ");
 
         //Parse the signatures
+        sc.useDelimiter(" ");
         number_of_signature = sc.nextInt();
+
         sc.useDelimiter("");
         sc.next();
         for(int j = 0; j < number_of_signature; j++){
@@ -40,7 +39,7 @@ public class Message{
             signature.add(sign);
         }
 
-        // Parse the cypher text.
+        // Read the cypher text.
         message = "";
         while(sc.hasNext()){
             message = message + sc.next();
@@ -49,7 +48,7 @@ public class Message{
     }
 
     public String toString(){
-        String result = (char)((byte)summary.length()) + summary + " ";
+        String result = summary.length() + " " + summary;
         result = result + number_of_signature + " ";
         for(String sign:signature){
             result = result + sign;
@@ -64,14 +63,15 @@ public class Message{
     public void Encrypt(String content,PublicKey key) throws Exception{
         message = EncryptionUtil.encrypt(content,key);
         summary = EncryptionUtil.summary(content);
+        summary = EncryptionUtil.encrypt(summary,key);
     }
 
     public String Decrypt(PrivateKey key) throws Exception{
         return EncryptionUtil.decrypt(message,key);
     }
 
-    public String Summary() throws Exception{
-        return summary;
+    public String Summary(PrivateKey key) throws Exception{
+        return EncryptionUtil.decrypt(summary,key);
     }
 
     public void Sign(PrivateKey key) throws Exception{

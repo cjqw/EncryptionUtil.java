@@ -28,5 +28,6 @@ public class Test{
         // Test parsing.
         Message raw_msg = new Message(st);
         System.out.println(raw_msg.Decrypt(privateKey));
+        System.out.println(raw_msg.Summary(privateKey));
     }
 };
