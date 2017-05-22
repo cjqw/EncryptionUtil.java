@@ -1,4 +1,4 @@
-package EncryptionUtil;
+package message.encryptionutil;
 
 import java.io.*;
 import java.util.*;
@@ -209,6 +209,7 @@ public class EncryptionUtil{
             System.out.println("Signed: " + signText);
             System.out.println("Decrypted: " + verifyResult);
             System.out.println("Summary: " + summaryResult);
+            System.out.println(signText.length());
         } catch (Exception e) {
             e.printStackTrace();
         }
