@@ -1,5 +1,8 @@
 all:
-	javac EncryptionUtil.java
+	javac Message.java
 
 run:
-	java -cp ./ EncryptionUtil
+	java -cp ./ Message
+
+test:
+	java -cp ./ EncryptionUtil.EncryptionUtil
