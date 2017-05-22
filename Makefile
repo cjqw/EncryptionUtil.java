@@ -1,5 +1,5 @@
 all:
-	javac Test.java
+	javac Test.java -cp message.jar
 
 run:
-	java -cp ./ Test
+	java -cp "message.jar:./" Test
