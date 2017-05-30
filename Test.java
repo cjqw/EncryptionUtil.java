@@ -13,13 +13,19 @@ public class Test{
         PrivateKey privateKey = keys.getPrivate();
         PublicKey publicKey = keys.getPublic();
 
+        KeyPair mykeys = msg.Generate();
+        PrivateKey myPrivateKey = mykeys.getPrivate();
+        PublicKey myPublicKey = mykeys.getPublic();
+
+        System.out.println("START");
+
         // Test encrypt.
-        msg.Encrypt(content,publicKey);
+        msg.Encrypt(666,content,myPrivateKey,publicKey);
         System.out.println(msg.Decrypt(privateKey));
+        System.out.println(msg.getContent());
 
         // Test signature.
-        msg.Sign(privateKey);
-        Boolean validate = msg.Validate(publicKey);
+        Boolean validate = msg.Validate(myPublicKey);
         System.out.println(validate);
 
         // Test toString.
@@ -27,7 +33,14 @@ public class Test{
 
         // Test parsing.
         Message raw_msg = new Message(st);
+
+        // Test encrypt raw string
         System.out.println(raw_msg.Decrypt(privateKey));
-        System.out.println(raw_msg.Summary(privateKey));
+        System.out.println(raw_msg.getContent());
+
+        // Test signature.
+        validate = raw_msg.Validate(publicKey);
+        System.out.println(validate);
+        System.out.println(raw_msg.ValidateCipher(myPublicKey));
     }
 };

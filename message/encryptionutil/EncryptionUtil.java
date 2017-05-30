@@ -70,7 +70,7 @@ public class EncryptionUtil{
      * @return Encrypted text
      * @throws java.lang.Exception
      */
-    public static String encrypt(String text, PublicKey key) {
+    public static String encryptChunk(String text, PublicKey key) {
         String cipherText = "";
         try {
             // get an RSA cipher object and print the provider
@@ -84,6 +84,22 @@ public class EncryptionUtil{
         return cipherText;
     }
 
+    public static String encrypt(String text, PublicKey key) {
+        String cipherText = "";
+        int len = text.length();
+        for(int i = 0; i < ((len - 1) / 200 + 1); i++){
+            int start = i * 200;
+            int end = start + 200;
+            if(end > len){
+                end = len;
+            }
+            cipherText = cipherText +
+                encryptChunk(text.substring(start,end),key);
+        }
+        return cipherText;
+    }
+
+
     /**
      * Decrypt text using private key.
      *
@@ -94,7 +110,7 @@ public class EncryptionUtil{
      * @return plain text
      * @throws java.lang.Exception
      */
-    public static String decrypt(String text, PrivateKey key) {
+    public static String decryptChunk(String text, PrivateKey key) {
         String decryptedText = "";
         try {
             // get an RSA cipher object and print the provider
@@ -110,6 +126,23 @@ public class EncryptionUtil{
 
         return decryptedText;
     }
+
+    public static String decrypt(String text, PrivateKey key) throws Exception{
+        String decryptedText = "";
+
+        Scanner sc = new Scanner(text);
+        sc.useDelimiter("");
+        while(sc.hasNext()){
+            String chunk = "";
+            for(int i = 0; i < 256; i++){
+                char c = sc.next().charAt(0);
+                chunk = chunk + c;
+            }
+            decryptedText = decryptedText + decryptChunk(chunk,key);
+        }
+        return decryptedText;
+    }
+
 
     /**
      * Sign the text using privete key.

@@ -1,43 +1,33 @@
 package message;
 
 import java.util.*;
+import java.util.Base64.*;
 import javax.crypto.*;
 import java.security.*;
+import java.security.spec.*;
 import message.encryptionutil.*;
 
 public class Message{
     private int number_of_signature = 0;
     private String message;
-    private List <String> signature = new ArrayList <String> ();
-    private String summary = "";
+    private String signature;
+
+    private String cipherSign;
+    private String content;
+    private int sender;
 
     public Message(){}
 
     public Message(String msg) throws Exception{
         Scanner sc = new Scanner(msg);
-
-        // Parse the summary
-        int summary_length = sc.nextInt();
+        //Parse the signature
         sc.useDelimiter("");
-        sc.next();
-        for(int i = 0; i < summary_length; i++){
-            summary = summary + sc.next().charAt(0);
+        String sign = "";
+        for(int i = 0; i < 256; i++){
+            char c = sc.next().charAt(0);
+            sign = sign + c;
         }
-
-        //Parse the signatures
-        sc.useDelimiter(" ");
-        number_of_signature = sc.nextInt();
-
-        sc.useDelimiter("");
-        sc.next();
-        for(int j = 0; j < number_of_signature; j++){
-            String sign = "";
-            for(int i = 0; i < 256; i++){
-                char c = sc.next().charAt(0);
-                sign = sign + c;
-            }
-            signature.add(sign);
-        }
+        signature = sign;
 
         // Read the cypher text.
         message = "";
@@ -48,41 +38,65 @@ public class Message{
     }
 
     public String toString(){
-        String result = summary.length() + " " + summary;
-        result = result + number_of_signature + " ";
-        for(String sign:signature){
-            result = result + sign;
-        }
-        return result + message;
+        String result = signature + message;
+        return result;
     }
 
     public KeyPair Generate() throws Exception{
         return EncryptionUtil.generate();
     }
 
-    public void Encrypt(String content,PublicKey key) throws Exception{
-        message = EncryptionUtil.encrypt(content,key);
-        summary = EncryptionUtil.summary(content);
-        summary = EncryptionUtil.encrypt(summary,key);
+    public void Encrypt(int sender,String content,PrivateKey mykey,PublicKey key) throws Exception{
+        String sign = EncryptionUtil.sign(content,mykey);
+        String msg = sender + " " + sign + content;
+        message = EncryptionUtil.encrypt(msg,key);
+        signature = EncryptionUtil.sign(message,mykey);
     }
 
-    public String Decrypt(PrivateKey key) throws Exception{
-        return EncryptionUtil.decrypt(message,key);
+    // Decrypt the message using private key.
+    // Return false if the decode process is wrong.
+    public Boolean Decrypt(PrivateKey key) {
+        try{
+            String msg = EncryptionUtil.decrypt(message,key);
+            Scanner sc = new Scanner(msg);
+            sender = sc.nextInt();
+            sc.useDelimiter("");
+            sc.next();
+
+            //Parse the signature
+            cipherSign = "";
+            for(int i = 0; i < 256; i++){
+                char c = sc.next().charAt(0);
+                cipherSign = cipherSign + c;
+            }
+            // Read the cypher text.
+            content = "";
+            while(sc.hasNext()){
+                content = content + sc.next();
+            }
+
+        }catch(Exception e){
+            return false;
+        }
+        return true;
     }
 
-    public String Summary(PrivateKey key) throws Exception{
-        return EncryptionUtil.decrypt(summary,key);
+    public Boolean ValidateCipher(PublicKey key)throws Exception{
+        return EncryptionUtil.verify(content,key,cipherSign);
     }
 
-    public void Sign(PrivateKey key) throws Exception{
-        signature.add(EncryptionUtil.sign(message,key));
-        number_of_signature = number_of_signature + 1;
+    public String getContent(){
+        return content;
     }
 
     public boolean Validate(PublicKey key) throws Exception{
-        for(String sign: signature){
-            if(EncryptionUtil.verify(message,key,sign)) return true;
-        }
-        return false;
+        return EncryptionUtil.verify(message,key,signature);
     }
+
+    // public String PublicKey2String(PublicKey key){
+    // }
+
+    // public PublicKey String2PublicKey(String st){
+    // }
+
 }
