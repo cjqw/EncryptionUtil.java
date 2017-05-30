@@ -93,10 +93,18 @@ public class Message{
         return EncryptionUtil.verify(message,key,signature);
     }
 
-    // public String PublicKey2String(PublicKey key){
-    // }
+    public static String PublicKey2String(PublicKey key) throws Exception{
+        String keyString = EncryptionUtil.ByteArray2String(key.getEncoded());
+        return keyString;
+    }
 
-    // public PublicKey String2PublicKey(String st){
-    // }
+    public static PublicKey String2PublicKey(String st) throws Exception{
+        byte[] keyBytes = EncryptionUtil.String2ByteArray(st);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        X509EncodedKeySpec x509KeySpec2 = new X509EncodedKeySpec(keyBytes);
+        PublicKey publicKey = keyFactory.generatePublic(x509KeySpec2);
+        return publicKey;
+    }
+
 
 }

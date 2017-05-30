@@ -42,5 +42,12 @@ public class Test{
         validate = raw_msg.Validate(publicKey);
         System.out.println(validate);
         System.out.println(raw_msg.ValidateCipher(myPublicKey));
+
+        // Test string <--> public key
+        String keyString = Message.PublicKey2String(publicKey);
+        PublicKey pubKey= Message.String2PublicKey(keyString);
+        String keyString2 = Message.PublicKey2String(pubKey);
+        // System.out.println(keyString);
+        // System.out.println(keyString2);
     }
 };
